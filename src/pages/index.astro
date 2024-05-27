@@ -1,90 +1,21 @@
 ---
+import FileInfo from '../components/FileInfo.astro';
 import Layout from '../layouts/Layout.astro';
 ---
 
 <Layout title="File Hashes and Size">
-	<main x-data="FileInfo" class="mx-auto container px-4 md:px-8 py-8">
-		<div class="mb-5">
-			<input type="file" x-ref="file" @change="onChange(event)">
-		</div>
-		<div class="mb-5">
-			<button @click="clear()" class="border px-2 py-1">Clear File</button> <br>
-		</div>
-		<div>
-			Size: <span x-text="size"></span>
-		</div>
-		<div>
-			CRC32: <span x-text="crc32"></span>
-		</div>
-		<div>
-			MD5: <span x-text="md5"></span>
-		</div>
-		<div>
-			SHA-1: <span x-text="sha1"></span>
-		</div>
-		<div>
-			SHA-256: <span x-text="sha256"></span>
-		</div>
+	<header>
+		<h1 class="text-5xl">File Hashes and Size</h1>
+	</header>
+	<main class="">
+		<FileInfo />
 	</main>
+	<footer class="mt-auto flex flex-col space-y-2">
+		<p class="">
+			Created by <a class="underline hover:decoration-2" href="https://twitter.com/BrendonReyell">Bonzo</a> of <a class="underline hover:decoration-2" href="https://bonzosretro.shop/">Bonzo's Retro Shop</a>.
+		</p>
+		<div class="">
+			<a class="underline hover:decoration-2" href="https://github.com/breyell/File-Hashes-and-Size">Project GitHub</a>
+		</div>
+	</footer>
 </Layout>
-
-<script>
-import Alpine from "alpinejs";
-import { md5, crc32, sha1, sha256 } from "hash-wasm";
-
-
-Alpine.data('FileInfo', () => ({
-	file: null,
-	size: null,
-	crc32: null,
-	md5: null,
-	sha1: null,
-	sha256: null,
-	init () {
-		this.clear()
-	},
-	clear() {
-		this.$refs.file.value = ''
-		this.size = null
-		this.crc32 = null
-		this.md5 = null
-		this.sha1 = null
-		this.sha256 = null
-	},
-	onChange(event) {
-		this.file = this.$refs.file?.files[0]
-		this.size = this.file?.size
-
-		const files = event.target.files;
-		const file = files[0];
-		const reader = new FileReader();
-		reader.onload = function(event) {
-			calculateHashes(new Uint8Array(event.target.result)).then((value) => {
-				this.crc32 = value.crc32
-				this.md5 = value.md5
-				this.sha1 = value.sha1
-				this.sha256 = value.sha256
-			})
-
-			async function calculateHashes(data) {
-				return {
-					crc32: await crc32(new Uint8Array(data)),
-					md5: await md5(new Uint8Array(data)),
-					sha1: await sha1(new Uint8Array(data)),
-					sha256: await sha256(new Uint8Array(data)),
-				}
-			}
-		}.bind(this)
-		reader.readAsArrayBuffer(file)
-	},
-	getFileSize(file) {
-		if (file?.size < 1024) {
-			return `${file?.size} bytes`;
-		} else if (file?.size >= 1024 && file?.size < 1048576) {
-			return `${(file?.size / 1024).toFixed(1)} KB`;
-		} else if (file?.size >= 1048576) {
-			return `${(file?.size / 1048576).toFixed(1)} MB`;
-		}
-	},
-}))
-</script>
