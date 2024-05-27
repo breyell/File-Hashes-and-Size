@@ -40,7 +40,7 @@ Alpine.data('FileInfo', () => ({
 	sha1: null,
 	sha256: null,
 	init () {
-		clear()
+		this.clear()
 	},
 	clear() {
 		this.$refs.file.value = ''
@@ -75,7 +75,7 @@ Alpine.data('FileInfo', () => ({
 				}
 			}
 		}.bind(this)
-		reader.readAsText(file) // I suspect this is why my hashes are wrong, not sure how to fix
+		reader.readAsArrayBuffer(file) // I suspect this is why my hashes are wrong, not sure how to fix
 	},
 	getFileSize(file) {
 		if (file?.size < 1024) {
