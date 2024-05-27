@@ -2,17 +2,16 @@
 import Layout from '../layouts/Layout.astro';
 ---
 
-<Layout title="Datter Hashes">
-	<main x-data="FileInfo" class="flex flex-col">
-		<div class="mb-5">
-			<button @click="clear()">Clear File</button> <br>
-			Size: <span x-text="getFileSize(file)"></span>
-		</div>
+<Layout title="File Hashes and Size">
+	<main x-data="FileInfo" class="mx-auto container px-4 md:px-8 py-8">
 		<div class="mb-5">
 			<input type="file" x-ref="file" @change="onChange(event)">
 		</div>
+		<div class="mb-5">
+			<button @click="clear()" class="border px-2 py-1">Clear File</button> <br>
+		</div>
 		<div>
-			Size: <span x-text="file?.size"></span>
+			Size: <span x-text="size"></span>
 		</div>
 		<div>
 			CRC32: <span x-text="crc32"></span>
@@ -21,10 +20,10 @@ import Layout from '../layouts/Layout.astro';
 			MD5: <span x-text="md5"></span>
 		</div>
 		<div>
-			SHA1: <span x-text="sha1"></span>
+			SHA-1: <span x-text="sha1"></span>
 		</div>
 		<div>
-			SHA256: <span x-text="sha256"></span>
+			SHA-256: <span x-text="sha256"></span>
 		</div>
 	</main>
 </Layout>
@@ -36,6 +35,7 @@ import { md5, crc32, sha1, sha256 } from "hash-wasm";
 
 Alpine.data('FileInfo', () => ({
 	file: null,
+	size: null,
 	crc32: null,
 	md5: null,
 	sha1: null,
@@ -45,7 +45,7 @@ Alpine.data('FileInfo', () => ({
 	},
 	clear() {
 		this.$refs.file.value = ''
-		this.fileContent = null
+		this.size = null
 		this.crc32 = null
 		this.md5 = null
 		this.sha1 = null
@@ -53,10 +53,11 @@ Alpine.data('FileInfo', () => ({
 	},
 	onChange(event) {
 		this.file = this.$refs.file?.files[0]
+		this.size = this.file?.size
 
-		var files = event.target.files;
-		var file = files[0];
-		var reader = new FileReader();
+		const files = event.target.files;
+		const file = files[0];
+		const reader = new FileReader();
 		reader.onload = function(event) {
 			calculateHashes(new Uint8Array(event.target.result)).then((value) => {
 				this.crc32 = value.crc32
