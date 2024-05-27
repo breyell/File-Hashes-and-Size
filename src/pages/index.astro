@@ -35,11 +35,13 @@ import { md5, crc32, sha1, sha256 } from "hash-wasm";
 
 Alpine.data('FileInfo', () => ({
 	file: null,
-	fileContent: null,
 	md5: null,
 	crc32: null,
 	sha1: null,
 	sha256: null,
+	init () {
+		clear()
+	},
 	clear() {
 		this.$refs.file.value = ''
 		this.fileContent = null
@@ -55,6 +57,8 @@ Alpine.data('FileInfo', () => ({
 		var file = files[0];
 		var reader = new FileReader();
 		reader.onload = function(event) {
+			console.log(event.target)
+			console.log(event.target.result)
 			calculateHashes().then((value) => {
 				this.md5 = value.md5
 				this.crc32 = value.crc32
@@ -71,13 +75,7 @@ Alpine.data('FileInfo', () => ({
 				}
 			}
 		}.bind(this)
-		reader.readAsText(file)
-	},
-
-	async calculate() {
-		console.log('calc')
-		console.log(this.file)
-		this.md5 = await md5(this.file)
+		reader.readAsText(file) // I suspect this is why my hashes are wrong, not sure how to fix
 	},
 	getFileSize(file) {
 		if (file?.size < 1024) {
