@@ -1,0 +1,92 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Datter Hashes">
+	<main x-data="FileInfo" class="flex flex-col">
+		<div class="mb-5">
+			<button @click="clear()">Clear File</button>
+		</div>
+		<div class="mb-5">
+			<input type="file" x-ref="file" @change="onChange(event)">
+		</div>
+		<div>
+			Size: <span x-text="getFileSize(file)"></span>
+		</div>
+		<div>
+			MD5: <span x-text="md5"></span>
+		</div>
+		<div>
+			CRC32: <span x-text="crc32"></span>
+		</div>
+		<div>
+			SHA1: <span x-text="sha1"></span>
+		</div>
+		<div>
+			SHA256: <span x-text="sha256"></span>
+		</div>
+	</main>
+</Layout>
+
+<script>
+import Alpine from "alpinejs";
+import { md5, crc32, sha1, sha256 } from "hash-wasm";
+
+
+Alpine.data('FileInfo', () => ({
+	file: null,
+	fileContent: null,
+	md5: null,
+	crc32: null,
+	sha1: null,
+	sha256: null,
+	clear() {
+		this.$refs.file.value = ''
+		this.fileContent = null
+		this.md5 = null
+		this.crc32 = null
+		this.sha1 = null
+		this.sha256 = null
+	},
+	onChange(event) {
+		this.file = this.$refs.file?.files[0]
+
+		var files = event.target.files;
+		var file = files[0];
+		var reader = new FileReader();
+		reader.onload = function(event) {
+			calculateHashes().then((value) => {
+				this.md5 = value.md5
+				this.crc32 = value.crc32
+				this.sha1 = value.sha1
+				this.sha256 = value.sha256
+			})
+
+			async function calculateHashes() {
+				return {
+					md5: await md5(event.target.result),
+					crc32: await crc32(event.target.result),
+					sha1: await sha1(event.target.result),
+					sha256: await sha256(event.target.result),
+				}
+			}
+		}.bind(this)
+		reader.readAsText(file)
+	},
+
+	async calculate() {
+		console.log('calc')
+		console.log(this.file)
+		this.md5 = await md5(this.file)
+	},
+	getFileSize(file) {
+		if (file?.size < 1024) {
+			return `${file?.size} bytes`;
+		} else if (file?.size >= 1024 && file?.size < 1048576) {
+			return `${(file?.size / 1024).toFixed(1)} KB`;
+		} else if (file?.size >= 1048576) {
+			return `${(file?.size / 1048576).toFixed(1)} MB`;
+		}
+	},
+}))
+</script>
