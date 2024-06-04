@@ -24,6 +24,30 @@
 			SHA-256: <span x-text="sha256"></span>
 		</div>
 	</div>
+	<div class="mt-12">
+		NES Header: <span class="uppercase" x-text="nesHeader?.join(' ')"></span>
+	</div>
+	<div>
+		NES Header Type: <span x-text="nesHeaderType"></span>
+	</div>
+	<div class="mt-6">
+		NES Headerless Data
+		<div>
+			Size: <span x-text="nesSize"></span>
+		</div>
+		<div>
+			CRC32: <span x-text="nesCrc32"></span>
+		</div>
+		<div>
+			MD5: <span x-text="nesMd5"></span>
+		</div>
+		<div>
+			SHA-1: <span x-text="nesSha1"></span>
+		</div>
+		<div>
+			SHA-256: <span x-text="nesSha256"></span>
+		</div>
+	</div>
 </section>
 
 <script>
@@ -37,6 +61,13 @@ Alpine.data('FileInfo', () => ({
 	md5: null,
 	sha1: null,
 	sha256: null,
+	nesHeader: null,
+	nesHeaderType: null,
+	nesSize: null,
+	nesCrc32: null,
+	nesMd5: null,
+	nesSha1: null,
+	nesSha256: null,
 	init () {
 		this.clear()
 	},
@@ -47,28 +78,58 @@ Alpine.data('FileInfo', () => ({
 		this.md5 = null
 		this.sha1 = null
 		this.sha256 = null
+		this.nesHeader = null
+		this.nesHeaderType = null
+		this.nesSize = null
+		this.nesCrc32 = null
+		this.nesMd5 = null
+		this.nesSha1 = null
+		this.nesSha256 = null
 	},
 	onChange(event) {
 		this.file = this.$refs.file?.files[0]
 		this.size = this.file?.size
+		this.nesSize = this.size - 16
 
 		const files = event.target.files;
 		const file = files[0];
 		const reader = new FileReader();
 		reader.onload = function(event) {
+			const nesHeaderData = new Uint8Array(event.target.result).slice(0,16)
+			const nesHeaderDataPadded = []
+			nesHeaderData.forEach(item => {
+				let itemValue = item.toString(16)
+				nesHeaderDataPadded.push(itemValue.length < 2 ? '0' + itemValue : itemValue)
+			})
+			this.nesHeaderType = nesHeaderData[7] == 8 ? 'NES 2.0' : 'iNES'
+			this.nesHeader = nesHeaderDataPadded
+
 			calculateHashes(new Uint8Array(event.target.result)).then((value) => {
 				this.crc32 = value.crc32
 				this.md5 = value.md5
 				this.sha1 = value.sha1
 				this.sha256 = value.sha256
+
+				this.nesCrc32 = value.nesCrc32
+				this.nesMd5 = value.nesMd5
+				this.nesSha1 = value.nesSha1
+				this.nesSha256 = value.nesSha256
 			})
 
 			async function calculateHashes(data) {
+				// console.log(new Uint8Array(data))
+				const nesHeaderlessData = new Uint8Array(data).slice(16)
+
 				return {
 					crc32: await crc32(new Uint8Array(data)),
 					md5: await md5(new Uint8Array(data)),
 					sha1: await sha1(new Uint8Array(data)),
 					sha256: await sha256(new Uint8Array(data)),
+
+					nesCrc32: await crc32(nesHeaderlessData),
+					nesMd5: await md5(nesHeaderlessData),
+					nesSha1: await sha1(nesHeaderlessData),
+					nesSha256: await sha256(nesHeaderlessData),
 				}
 			}
 		}.bind(this)
