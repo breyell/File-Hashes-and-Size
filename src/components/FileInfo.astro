@@ -3,11 +3,26 @@
 		<div class="">
 			<input type="file" x-ref="file" @change="onChange(event)">
 		</div>
+		<label class="inline-flex items-center cursor-pointer">
+			<input x-model="showNESData" type="checkbox" value="" class="sr-only peer" checked>
+			<div class="relative w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+			<span class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">Show NES-Specific Data</span>
+		</label>
+
 		<div class="">
 			<button @click="clear()" class="border px-2 py-1">Clear File</button> <br>
 		</div>
 	</div>
 	<div class="mt-12">
+		<div class="font-medium mb-1" x-text="showNESData ? 'NES Headered Info' : 'File Info'"></div>
+		<div x-show="showNESData" class="">
+			<div class="">
+				Header: <span class="uppercase" x-text="nesHeader?.join(' ')"></span>
+			</div>
+			<div>
+				Header Type: <span x-text="nesHeaderType"></span>
+			</div>
+		</div>
 		<div>
 			Size: <span x-text="size"></span>
 		</div>
@@ -24,28 +39,24 @@
 			SHA-256: <span x-text="sha256"></span>
 		</div>
 	</div>
-	<div class="mt-12">
-		NES Header: <span class="uppercase" x-text="nesHeader?.join(' ')"></span>
-	</div>
-	<div>
-		NES Header Type: <span x-text="nesHeaderType"></span>
-	</div>
-	<div class="mt-6">
-		NES Headerless Data
-		<div>
-			Size: <span x-text="nesSize"></span>
-		</div>
-		<div>
-			CRC32: <span x-text="nesCrc32"></span>
-		</div>
-		<div>
-			MD5: <span x-text="nesMd5"></span>
-		</div>
-		<div>
-			SHA-1: <span x-text="nesSha1"></span>
-		</div>
-		<div>
-			SHA-256: <span x-text="nesSha256"></span>
+	<div x-show="showNESData" class="">
+		<div class="mt-6">
+			NES Headerless Info
+			<div>
+				Size: <span x-text="nesSize"></span>
+			</div>
+			<div>
+				CRC32: <span x-text="nesCrc32"></span>
+			</div>
+			<div>
+				MD5: <span x-text="nesMd5"></span>
+			</div>
+			<div>
+				SHA-1: <span x-text="nesSha1"></span>
+			</div>
+			<div>
+				SHA-256: <span x-text="nesSha256"></span>
+			</div>
 		</div>
 	</div>
 </section>
@@ -55,6 +66,7 @@ import Alpine from "alpinejs";
 import { md5, crc32, sha1, sha256 } from "hash-wasm";
 
 Alpine.data('FileInfo', () => ({
+	showNESData: false,
 	file: null,
 	size: null,
 	crc32: null,
@@ -101,7 +113,13 @@ Alpine.data('FileInfo', () => ({
 				let itemValue = item.toString(16)
 				nesHeaderDataPadded.push(itemValue.length < 2 ? '0' + itemValue : itemValue)
 			})
-			this.nesHeaderType = nesHeaderData[7] == 8 ? 'NES 2.0' : 'iNES'
+			if (nesHeaderDataPadded.slice(0, 4).join('').toUpperCase() === '4E45531A' && nesHeaderDataPadded[7] == '08') {
+				this.nesHeaderType = 'NES 2.0'
+			} else if (nesHeaderDataPadded.slice(0, 4).join('').toUpperCase() === '4E45531A') {
+				this.nesHeaderType = 'iNES'
+			} else {
+				this.nesHeaderType = 'Not iNES or NES 2.0'
+			}
 			this.nesHeader = nesHeaderDataPadded
 
 			calculateHashes(new Uint8Array(event.target.result)).then((value) => {
@@ -117,7 +135,6 @@ Alpine.data('FileInfo', () => ({
 			})
 
 			async function calculateHashes(data) {
-				// console.log(new Uint8Array(data))
 				const nesHeaderlessData = new Uint8Array(data).slice(16)
 
 				return {
