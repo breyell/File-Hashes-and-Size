@@ -14,8 +14,8 @@
 		</div>
 	</div>
 	<div class="mt-12">
-		<div class="font-medium mb-1" x-text="showNESData ? 'NES Headered Info' : 'File Info'"></div>
-		<div x-show="showNESData" class="">
+		<div class="font-medium mb-1" x-text="showNESData ? 'NES Headered Info' : 'File Info'">File Info</div>
+		<div x-show="showNESData" x-cloak class="">
 			<div class="">
 				Header: <span class="uppercase" x-text="nesHeader?.join(' ')"></span>
 			</div>
@@ -39,7 +39,7 @@
 			SHA-256: <span x-text="sha256"></span>
 		</div>
 	</div>
-	<div x-show="showNESData" class="">
+	<div x-show="showNESData" x-cloak class="">
 		<div class="mt-6">
 			NES Headerless Info
 			<div>
@@ -163,3 +163,9 @@ Alpine.data('FileInfo', () => ({
 	// },
 }))
 </script>
+
+<style>
+[x-cloak] {
+	display: none;
+}
+</style>
